@@ -1,0 +1,63 @@
+package(default_visibility = ["//visibility:public"])
+
+load("@protobuf//bazel:cc_proto_library.bzl", "cc_proto_library")
+load("@protobuf//bazel:proto_library.bzl", "proto_library")
+
+CXX_FLAGS = [
+  # TODO BL: The version of googletest we're using only supports C++17 onwards "-std=c++14",
+  # "-std=c++14",
+  "-std=c++17", 
+
+  "-g",
+  "-O2",
+]
+
+# all: compile_cpp_proto dashapi.so compile_py_proto swig test
+
+proto_library(
+  name = "proto",
+  deps = [
+    "@protobuf//:timestamp_proto",
+  ],
+  srcs = glob(["proto/*.proto"]),
+  strip_import_prefix = "proto",
+)
+
+# compile_cpp_proto:
+# 	$(MKDIR) -p $(BUILD_DIR)
+# 	protoc -I=$(DASH_API_PROTO_DIR) --cpp_out=$(BUILD_DIR) --experimental_allow_proto3_optional $(DASH_API_PROTO_DIR)/*.proto
+cc_proto_library(
+  name = "compile_cpp_proto",
+  deps = [":proto"],
+)
+
+filegroup(
+  name = "misc",
+  srcs = glob([
+    "misc/**/*.cpp",
+    "misc/**/*.h",
+  ]),
+)
+
+# dashapi.so: compile_cpp_proto
+# 	g++ $(CXX_FLAGS) -fPIC -shared -o $(BUILD_DIR)/$(LIBDASHAPI) $(wildcard $(BUILD_DIR)/*.pb.cc) $(wildcard $(MISC_DIR)/*.cpp) -lprotobuf
+cc_library(
+  name = "dashapi",
+  deps = [
+    ":compile_cpp_proto",
+    "@googletest//:gtest",
+    # "@bookworm//libgtest-dev:libgtest",
+    "@protobuf//:json_util",
+    "@bookworm//libboost-dev:libboost",
+  ],
+  srcs = [
+    ":misc",
+  ],
+  includes = [
+    "misc",
+  ],
+  cxxopts = CXX_FLAGS + [
+    "-fPIC",
+    "-shared",
+  ],
+)

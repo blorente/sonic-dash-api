@@ -1,0 +1,57 @@
+module(name = "sonic-dash-api")
+
+# From the packages in Ubuntu 24.04
+# PROTOBUF_VERSION = "3.21.12"
+PROTOBUF_VERSION = "3.19.6"
+GTEST_VERSION = "1.14.0"
+
+bazel_dep(name = "protobuf", version = PROTOBUF_VERSION)
+bazel_dep(name = "googletest", version = GTEST_VERSION)
+# TODO BL: the latests googletest doesn't support c++14
+# bazel_dep(name = "googletest", version = "1.17.0", repo_name = "com_google_googletest")
+
+bazel_dep(name = "sonic-build-infra", version = "0.0.0")
+# git_override(
+#     module_name = "sonic-build-infra",
+#     commit = "01d897a9e7b7aea219a389ccd5112233f26576b8",  # Tip of master
+#     remote = "https://github.com/thesayyn/sonic-build-infra",
+# )
+local_path_override(
+    module_name = "sonic-build-infra",
+    path = "../../sonic-net/sonic-build-infra",
+)
+
+register_toolchains("@sonic-build-infra//toolchains/gcc:host_gcc_toolchain")
+
+bazel_dep(name = "rules_distroless", version = "0.6.1")
+# git_override(
+#     module_name = "rules_distroless",
+#     commit = "5d1c4e8e24bfb7362fd19813e554063e32da9c9d",  # tip of `new_api` in https://github.com/bazel-contrib/rules_distroless/pull/183
+#     remote = "https://github.com/bazel-contrib/rules_distroless",
+# )
+local_path_override(
+  module_name = "rules_distroless",
+  path = "../../bazel-contrib/rules_distroless",
+)
+
+apt = use_extension("@rules_distroless//apt:extensions.bzl", "apt")
+
+apt.sources_list(
+    architectures = ["amd64"],
+    components = ["main"],
+    suites = ["bookworm", "bookworm-updates"],
+    uris = ["https://snapshot.debian.org/archive/debian/20251001T023456Z"],
+)
+
+apt.install(
+    dependency_set = "bookworm",
+    suites = ["bookworm", "bookworm-updates"],
+    packages = [
+        "libboost-dev",
+        # "libgtest-dev",
+    ]
+)
+
+apt.lock(into = ":packages.lock")
+
+use_repo(apt, "bookworm")
