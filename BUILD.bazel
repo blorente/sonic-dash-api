@@ -48,8 +48,10 @@ cc_library(
 filegroup(
   name = "misc",
   srcs = glob([
-    "misc/**/*.cpp",
-    "misc/**/*.h",
+    "misc/*.cpp",
+    "misc/*.h",
+    # "misc/**/*.cpp",
+    # "misc/**/*.h",
   ]),
 )
 

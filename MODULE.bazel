@@ -1,14 +1,8 @@
 module(name = "sonic-dash-api")
 
-# From the packages in Ubuntu 24.04
-# PROTOBUF_VERSION = "3.21.12"
-PROTOBUF_VERSION = "3.19.6"
-GTEST_VERSION = "1.14.0"
-
-bazel_dep(name = "protobuf", version = PROTOBUF_VERSION)
-bazel_dep(name = "googletest", version = GTEST_VERSION)
-# TODO BL: the latests googletest doesn't support c++14
-# bazel_dep(name = "googletest", version = "1.17.0", repo_name = "com_google_googletest")
+bazel_dep(name = "protobuf", version = "33.4")
+bazel_dep(name = "googletest", version = "1.17.0")
+bazel_dep(name = "bazel_lib", version = "3.1.1")
 
 bazel_dep(name = "sonic-build-infra", version = "0.0.0")
 # git_override(
@@ -48,7 +42,6 @@ apt.install(
     suites = ["bookworm", "bookworm-updates"],
     packages = [
         "libboost-dev",
-        # "libgtest-dev",
     ]
 )
 
