@@ -2,6 +2,8 @@ package(default_visibility = ["//visibility:public"])
 
 load("@protobuf//bazel:cc_proto_library.bzl", "cc_proto_library")
 load("@protobuf//bazel:proto_library.bzl", "proto_library")
+load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
+load("//:to_install_dir.bzl", "to_install_dir")
 
 CXX_FLAGS = [
   # TODO BL: The version of googletest we're using only supports C++17 onwards "-std=c++14",
@@ -27,8 +29,20 @@ proto_library(
 # 	$(MKDIR) -p $(BUILD_DIR)
 # 	protoc -I=$(DASH_API_PROTO_DIR) --cpp_out=$(BUILD_DIR) --experimental_allow_proto3_optional $(DASH_API_PROTO_DIR)/*.proto
 cc_proto_library(
-  name = "compile_cpp_proto",
+  name = "dashapi_proto",
   deps = [":proto"],
+)
+
+to_install_dir(
+  name = "dashapi_proto_headers_dir",
+)
+
+# This library exoses the proto headers in the same directory as they will be installed in the system
+cc_library(
+  name = "dashapi_proto_headers",
+  srcs = [":dashapi_proto_headers_dir"],
+  hdrs = [":dashapi_proto_headers_dir"],
+  deps = [":dashapi_proto"],
 )
 
 filegroup(
@@ -44,9 +58,8 @@ filegroup(
 cc_library(
   name = "dashapi",
   deps = [
-    ":compile_cpp_proto",
+    ":dashapi_proto",
     "@googletest//:gtest",
-    # "@bookworm//libgtest-dev:libgtest",
     "@protobuf//:json_util",
     "@bookworm//libboost-dev:libboost",
   ],
