@@ -3,6 +3,7 @@ module(name = "sonic-dash-api")
 bazel_dep(name = "protobuf", version = "33.4")
 bazel_dep(name = "googletest", version = "1.17.0")
 bazel_dep(name = "bazel_lib", version = "3.1.1")
+bazel_dep(name = "tar.bzl", version = "0.8.1")
 
 bazel_dep(name = "sonic-build-infra", version = "0.0.0")
 # git_override(
@@ -41,7 +42,9 @@ apt.install(
     dependency_set = "bookworm",
     suites = ["bookworm", "bookworm-updates"],
     packages = [
+        "swig",
         "libboost-dev",
+        "python3-dev",
     ]
 )
 
