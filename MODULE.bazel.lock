@@ -206,7 +206,7 @@
   "moduleExtensions": {
     "@@rules_distroless+//apt:extensions.bzl%apt": {
       "general": {
-        "bzlTransitiveDigest": "7+rWzzEa4+BcKCbXdUXx62Ht5OijXawWDchUesKKkqI=",
+        "bzlTransitiveDigest": "UqU5QywXqNh1Lm2vK+xfStnLMPrEN2YWFKfVyqgNKIc=",
         "usagesDigest": "rSNLcLaTnp89OmTwCB9T9esTQmneRV9VuR71Y16DSa0=",
         "recordedFileInputs": {
           "@@//packages.lock": "dda19983f8a9be596a5042c1f2c5ce14f5aceee1971068a933f8c53eae41c759"

@@ -6,27 +6,17 @@ bazel_dep(name = "bazel_lib", version = "3.1.1")
 bazel_dep(name = "tar.bzl", version = "0.8.1")
 
 bazel_dep(name = "sonic-build-infra", version = "0.0.0")
-# git_override(
-#     module_name = "sonic-build-infra",
-#     commit = "01d897a9e7b7aea219a389ccd5112233f26576b8",  # Tip of master
-#     remote = "https://github.com/thesayyn/sonic-build-infra",
-# )
 local_path_override(
     module_name = "sonic-build-infra",
-    path = "../../sonic-net/sonic-build-infra",
+    path = "../sonic-build-infra",
 )
 
 register_toolchains("@sonic-build-infra//toolchains/gcc:host_gcc_toolchain")
 
 bazel_dep(name = "rules_distroless", version = "0.6.1")
-# git_override(
-#     module_name = "rules_distroless",
-#     commit = "5d1c4e8e24bfb7362fd19813e554063e32da9c9d",  # tip of `new_api` in https://github.com/bazel-contrib/rules_distroless/pull/183
-#     remote = "https://github.com/bazel-contrib/rules_distroless",
-# )
 local_path_override(
   module_name = "rules_distroless",
-  path = "../../bazel-contrib/rules_distroless",
+  path = "../rules_distroless",
 )
 
 apt = use_extension("@rules_distroless//apt:extensions.bzl", "apt")

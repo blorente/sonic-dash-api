@@ -10,15 +10,13 @@ load("@sonic-build-infra//swig:defs.bzl", "swig_gen", "swig_lib_deb")
 load("@sonic-build-infra//python:py_native_library.bzl", "py_native_library")
 
 CXX_FLAGS = [
-  # TODO BL: The version of googletest we're using only supports C++17 onwards "-std=c++14",
+  # The version of googletest we're using only supports C++17 onwards,
   # "-std=c++14",
   "-std=c++17", 
 
   "-g",
   "-O2",
 ]
-
-# all: compile_cpp_proto dashapi.so compile_py_proto swig test
 
 proto_library(
   name = "proto",
@@ -29,9 +27,6 @@ proto_library(
   strip_import_prefix = "proto",
 )
 
-# compile_cpp_proto:
-# 	$(MKDIR) -p $(BUILD_DIR)
-# 	protoc -I=$(DASH_API_PROTO_DIR) --cpp_out=$(BUILD_DIR) --experimental_allow_proto3_optional $(DASH_API_PROTO_DIR)/*.proto
 cc_proto_library(
   name = "dashapi_proto_cc",
   deps = [":proto"],
@@ -42,7 +37,7 @@ to_install_dir(
   cc_proto_target = ":dashapi_proto_cc",
 )
 
-# TODO BL: Generate .pyi versions of these files
+# TODO: Generate .pyi versions of these files if necessary
 py_proto_library(
   name = "dashapi_proto_py",
   deps = [":proto"],
@@ -61,13 +56,9 @@ filegroup(
   srcs = glob([
     "misc/*.cpp",
     "misc/*.h",
-    # "misc/**/*.cpp",
-    # "misc/**/*.h",
   ]),
 )
 
-# dashapi.so: compile_cpp_proto
-# 	g++ $(CXX_FLAGS) -fPIC -shared -o $(BUILD_DIR)/$(LIBDASHAPI) $(wildcard $(BUILD_DIR)/*.pb.cc) $(wildcard $(MISC_DIR)/*.cpp) -lprotobuf
 cc_library(
   name = "libdashapi",
   deps = [
@@ -93,11 +84,14 @@ copy_to_directory(
   out = "usr/include",
   srcs = glob([
     "misc/*.h",
-    # TODO BL: pb.h
-    # $(CP) $(BUILD_DIR)/*.pb.h $(INSTALLED_HEADER_DIR)
-  ]),
+  ]) + [
+    ":dashapi_proto_headers_dir",
+  ],
 )
 
+# We would like this to be a cc_shared_library,
+# but it tries to link against the protobuf runtime,
+# which was compiled without `-fPIC`.
 cc_binary(
   name = "dashapi",
   deps = [
@@ -120,7 +114,7 @@ swig_gen(
     ":libdashapi",
   ],
   cpp_out = "utils_wrap.cpp",
-  python_out = "utils.py", # TODO BL: this is created automatically, but we do need to include it in
+  python_out = "utils.py",
   swig_lib = ":swig_lib",
 )
 
@@ -148,11 +142,9 @@ cc_binary(
   linkstatic = True,
 )
 
-# usr/lib/*/libsaimetadata.so
-# usr/lib/*/libsaimeta.so
 copy_to_directory(
   name = "deb_libs_directory",
-  # TODO BL: parameterize based on target triple
+  # TODO: parameterize based on target triple
   out = "usr/lib/x86_64-linux-gnu",
   srcs = [
     ":dashapi",
@@ -163,15 +155,12 @@ copy_to_directory(
   name = "deb_bin_directory",
   out = "usr/bin",
   srcs = [
-    # TODO BL: make executable
+    # TODO: make executable
     ":misc/dash_api_utils",
   ],
   root_paths = ["misc"],
 )
 
-# $(CP) $(PYPKG_DIR)/*.py $(INSTALLED_PYTHON_DIR)
-# $(CP) $(PYPKG_DIR)/*.pyi $(INSTALLED_PYTHON_DIR)
-# $(CP) $(PYPKG_DIR)/_utils.so $(INSTALLED_PYTHON_DIR)
 copy_to_directory(
   name = "deb_python_directory",
   out = "usr/lib/python3/dist-packages/dash_api",
@@ -188,9 +177,6 @@ copy_to_directory(
   },
 )
 
-
-# TODO BL: we can probably break this down, but this is straight from debian/libsaimetadatata-dev.install
-# TODO BL: We may need to also do the files in `debian/libsaimetadata-dev.links`, which create symlinks to .0
 tar(
   name = "libdashapi_dev_pkg",
   srcs = [
