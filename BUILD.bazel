@@ -1,0 +1,189 @@
+package(default_visibility = ["//visibility:public"])
+
+load("@protobuf//bazel:cc_proto_library.bzl", "cc_proto_library")
+load("@protobuf//bazel:py_proto_library.bzl", "py_proto_library")
+load("@protobuf//bazel:proto_library.bzl", "proto_library")
+load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
+load("//:to_install_dir.bzl", "to_install_dir")
+load("@tar.bzl", "tar", "mutate")
+load("@sonic-build-infra//swig:defs.bzl", "swig_gen", "swig_lib_deb")
+load("@sonic-build-infra//python:py_native_library.bzl", "py_native_library")
+
+CXX_FLAGS = [
+  # The version of googletest we're using only supports C++17 onwards,
+  # "-std=c++14",
+  "-std=c++17", 
+
+  "-g",
+  "-O2",
+]
+
+proto_library(
+  name = "proto",
+  deps = [
+    "@protobuf//:timestamp_proto",
+  ],
+  srcs = glob(["proto/*.proto"]),
+  strip_import_prefix = "proto",
+)
+
+cc_proto_library(
+  name = "dashapi_proto_cc",
+  deps = [":proto"],
+)
+
+to_install_dir(
+  name = "dashapi_proto_headers_dir",
+  cc_proto_target = ":dashapi_proto_cc",
+)
+
+# TODO: Generate .pyi versions of these files if necessary
+py_proto_library(
+  name = "dashapi_proto_py",
+  deps = [":proto"],
+)
+
+# This library exoses the proto headers in the same directory as they will be installed in the system
+cc_library(
+  name = "dashapi_proto_headers",
+  srcs = [":dashapi_proto_headers_dir"],
+  hdrs = [":dashapi_proto_headers_dir"],
+  deps = [":dashapi_proto_cc"],
+)
+
+filegroup(
+  name = "misc",
+  srcs = glob([
+    "misc/*.cpp",
+    "misc/*.h",
+  ]),
+)
+
+cc_library(
+  name = "libdashapi",
+  deps = [
+    ":dashapi_proto_cc",
+    "@googletest//:gtest",
+    "@protobuf//:json_util",
+    "@bookworm//libboost-dev:libboost",
+  ],
+  srcs = [
+    ":misc",
+  ],
+  includes = [
+    "misc",
+  ],
+  cxxopts = CXX_FLAGS + [
+    "-fPIC",
+    "-shared",
+  ],
+)
+
+copy_to_directory(
+  name = "deb_headers_directory",
+  out = "usr/include",
+  srcs = glob([
+    "misc/*.h",
+  ]) + [
+    ":dashapi_proto_headers_dir",
+  ],
+)
+
+# We would like this to be a cc_shared_library,
+# but it tries to link against the protobuf runtime,
+# which was compiled without `-fPIC`.
+cc_binary(
+  name = "dashapi",
+  deps = [
+    ":libdashapi",
+  ],
+  linkshared = True,
+  linkstatic = True,
+)
+
+swig_lib_deb(
+    name = "swig_lib",
+    data = "@bookworm//swig",
+    strip_prefix = "usr/share/swig4.0",
+)
+
+swig_gen(
+  name = "utils_wrap",
+  interface = "misc/utils.i",
+  deps = [
+    ":libdashapi",
+  ],
+  cpp_out = "utils_wrap.cpp",
+  python_out = "utils.py",
+  swig_lib = ":swig_lib",
+)
+
+cc_library(
+  name = "libpy_utils",
+  srcs = [
+    ":misc",
+    ":utils_wrap.cpp",
+  ],
+  deps = [
+    ":dashapi_proto_cc",
+    "@bookworm//python3-dev:python3",
+    "@protobuf//:json_util",
+  ],
+  includes = ["misc"],
+  linkopts = [
+    "-fPIC"
+  ],
+)
+
+cc_binary(
+  name = "py_utils",
+  deps = [":libpy_utils"],
+  linkshared = True,
+  linkstatic = True,
+)
+
+copy_to_directory(
+  name = "deb_libs_directory",
+  # TODO: parameterize based on target triple
+  out = "usr/lib/x86_64-linux-gnu",
+  srcs = [
+    ":dashapi",
+  ],
+)
+
+copy_to_directory(
+  name = "deb_bin_directory",
+  out = "usr/bin",
+  srcs = [
+    # TODO: make executable
+    ":misc/dash_api_utils",
+  ],
+  root_paths = ["misc"],
+)
+
+copy_to_directory(
+  name = "deb_python_directory",
+  out = "usr/lib/python3/dist-packages/dash_api",
+  srcs = glob([
+    "misc/**/*.py",
+  ], allow_empty = True) + [
+    ":dashapi_proto_py",
+    ":utils.py",
+    ":py_utils",
+  ],
+  replace_prefixes = {
+    "_virtual_imports/proto": "",
+    "libpy_utils.so": "_utils.so",
+  },
+)
+
+tar(
+  name = "libdashapi_dev_pkg",
+  srcs = [
+    ":deb_headers_directory",
+    ":deb_libs_directory",
+    ":deb_bin_directory",
+    ":deb_python_directory",
+  ],
+  mutate = mutate(strip_prefix = package_name()),
+)

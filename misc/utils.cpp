@@ -70,14 +70,18 @@ string PbBinaryToJsonString(const string &table_name, const string &binary) {
     auto url = TableNameToTypeUrl(table_name);
     util::JsonPrintOptions options;
     options.add_whitespace = true;
-    options.always_print_primitive_fields = true;
+    // TODO: Replaced in Protobuf 26.x: https://protobuf.dev/news/v26/
+    // options.always_print_primitive_fields = true;
+    options.always_print_fields_with_no_presence = true;
     options.preserve_proto_field_names = true;
     string json;
 
     // Parse the message type
     auto status = util::BinaryToJsonString(resolver.get(), url, binary, &json, options);
     if (!status.ok()) {
-        throw runtime_error(status.message().as_string());
+        // TODO: C++17 doesn't have as_string for std::basic_string_view, so we replace it here. Is it correct?
+        // throw runtime_error(status.message().as_string());
+        throw runtime_error(std::string(status.message()));
     }
 
     return json;
@@ -92,7 +96,9 @@ string JsonStringToPbBinary(const string &table_name, const string &json) {
     string binary;
     auto status = util::JsonToBinaryString(resolver.get(), url, json, &binary, options);
     if (!status.ok()) {
-        throw runtime_error(status.message().as_string());
+        // TODO: C++17 doesn't have as_string for std::basic_string_view, so we replace it here. Is it correct?
+        // throw runtime_error(status.message().as_string());
+        throw runtime_error(std::string(status.message()));
     }
 
     return binary;
