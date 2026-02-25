@@ -9,7 +9,7 @@ def _to_install_dir_impl(ctx):
   includes = ctx.attr.cc_proto_target[CcInfo].compilation_context.includes
   copy_bin = ctx.toolchains["@bazel_lib//lib:copy_to_directory_toolchain_type"].copy_to_directory_info.bin
 
-  dst = ctx.actions.declare_directory(ctx.attr._install_dir)
+  dst = ctx.actions.declare_directory(ctx.attr.install_dir)
 
   copy_to_directory_bin_action(
     ctx,
@@ -35,7 +35,7 @@ to_install_dir = rule(
       mandatory = True,
       providers = [CcInfo],
     ),
-    "_install_dir": attr.string(
+    "install_dir": attr.string(
       default = "dash_api",
     ),
   },

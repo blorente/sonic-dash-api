@@ -3,12 +3,12 @@
 		"bookworm": {
 			"sets": {
 				"amd64": {
+					"/bookworm-security/linux-libc-dev:amd64": "6.1.153-1",
 					"/bookworm/libboost-dev:amd64": "1.74.0.3",
 					"/bookworm/libc6-dev:amd64": "2.36-9+deb12u13",
 					"/bookworm/libgcc-12-dev:amd64": "12.2.0-14+deb12u1",
 					"/bookworm/libstdc++-12-dev:amd64": "12.2.0-14+deb12u1",
 					"/bookworm/libstdc++6:amd64": "12.2.0-14+deb12u1",
-					"/bookworm/linux-libc-dev:amd64": "6.1.148-1",
 					"/bookworm/python3-dev:amd64": "3.11.2-1+b1",
 					"/bookworm/swig:all": "4.1.0-0.2"
 				}
